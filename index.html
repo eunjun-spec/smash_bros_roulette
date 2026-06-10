@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smash Bros. 얼티밋 룰렛</title>
+
+<style>
+
+body{
+margin:0;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:#f0f0f0;
+font-family:'Malgun Gothic',sans-serif;
+}
+
+.container{
+
+width:360px;
+height:640px;
+
+background:white;
+
+position:relative;
+
+overflow:hidden;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+box-shadow:0 4px 10px rgba(0,0,0,.15);
+
+}
+
+/* 햄버거 */
+
+.menu-btn{
+
+position:absolute;
+
+top:14px;
+
+left:12px;
+
+width:38px;
+
+height:38px;
+
+border:none;
+
+background:transparent;
+
+font-size:24px;
+
+color:#444;
+
+border-radius:10px;
+
+cursor:pointer;
+
+z-index:30;
+
+transition:.25s;
+
+}
+
+.menu-btn::before{
+content:"☰";
+}
+
+.menu-btn:hover{
+background:#f3f3f3;
+}
+
+.menu-btn.open{
+left:250px;
+}
+
+/* 사이드바 */
+
+.sidebar{
+
+position:absolute;
+
+left:-300px;
+
+top:0;
+
+width:300px;
+
+height:100%;
+
+background:white;
+
+transition:.25s;
+
+box-shadow:4px 0 12px rgba(0,0,0,.15);
+
+overflow-y:auto;
+
+z-index:20;
+
+}
+
+.sidebar.open{
+left:0;
+}
+
+.sidebar-title{
+
+padding:18px 20px 18px 65px;
+
+font-size:22px;
+
+font-weight:bold;
+
+}
+
+.character-list{
+
+padding:10px 20px;
+
+}
+
+.char-item{
+
+display:flex;
+
+gap:10px;
+
+padding:6px 0;
+
+}
+
+.sidebar-buttons{
+
+padding:20px;
+
+display:flex;
+
+gap:10px;
+
+}
+
+.side-btn{
+
+flex:1;
+
+padding:10px;
+
+border:none;
+
+border-radius:8px;
+
+cursor:pointer;
+
+}
+
+.select-btn{
+
+background:#4caf50;
+
+color:white;
+
+}
+
+.clear-btn{
+
+background:#d9534f;
+
+color:white;
+
+}
+
+/* 경고 */
+
+.toast{
+
+position:absolute;
+
+left:50%;
+
+top:50%;
+
+transform:translate(-50%,-50%);
+
+background:rgba(220,0,0,.75);
+
+color:white;
+
+padding:18px 30px;
+
+border-radius:12px;
+
+font-size:18px;
+
+opacity:0;
+
+pointer-events:none;
+
+transition:.3s;
+
+z-index:100;
+
+}
+
+.toast.show{
+
+opacity:1;
+
+}
+
+.title-image{
+
+width:300px;
+
+margin-top:40px;
+
+margin-bottom:20px;
+
+}
+
+.result-box{
+
+width:260px;
+
+height:120px;
+
+background:#eee;
+
+border:3px ridge #ccc;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:24px;
+
+font-weight:bold;
+
+text-align:center;
+
+margin-bottom:50px;
+
+}
+
+.roll-button{
+
+width:200px;
+
+padding:15px;
+
+background:#e63946;
+
+color:white;
+
+text-align:center;
+
+font-size:18px;
+
+font-weight:bold;
+
+border-radius:5px;
+
+box-shadow:0 4px #b32430;
+
+cursor:pointer;
+
+}
+
+.roll-button.disabled{
+
+background:#555;
+
+box-shadow:none;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<button class="menu-btn"></button>
+
+<div class="sidebar" id="sidebar">
+
+<div class="sidebar-title">
+캐릭터 선택
+</div>
+
+<div id="characterList" class="character-list"></div>
+
+<div class="sidebar-buttons">
+
+<button
+class="side-btn select-btn"
+id="selectAll"
+>
+전체 선택
+</button>
+
+<button
+class="side-btn clear-btn"
+id="clearAll"
+>
+전체 해제
+</button>
+
+</div>
+
+</div>
+
+<div class="toast" id="toast">
+캐릭터를 선택해주세요
+</div>
+
+<img
+src="name.png"
+class="title-image"
+>
+
+<div
+id="result"
+class="result-box"
+>
+누가 나올까?
+</div>
+
+<div
+id="rollBtn"
+class="roll-button"
+>
+룰렛 돌리기
+</div>
+
+</div>
+
+<script>
+
+const fighters=[
+
+"마리오","동키콩","링크","사무스","다크 사무스","요시","커비","폭스","피카츄","루이지",
+"네스","캡틴 팔콘","푸린","피치","데이지","쿠파","얼음 타기","시크","젤다","닥터마리오",
+"피츄","팔코","마르스","루키나","소년 링크","가논돌프","뮤츠","로이","크롬","Mr. 게임&워치",
+"메타 나이트","피트","블랙피트","제로 슈트 사무스","와리오","스네이크","아이크","포켓몬 트레이너",
+"디디콩","류카","소닉","디디디 대왕","피크민&올리마","루카리오","R.O.B.","툰링크","울프","마을 주민",
+"록맨","Wii Fit 트레이너","로젤리나&치코","리틀맥","개굴닌자","Mii 파이터","파르테나","팩맨",
+"러플레","슈르크","쿠파주니어","덕헌트","Ryu","Ken","클라우드","카무이","베요네타","잉클링",
+"리들리","사이먼","릭터","킹크루루","여울","어흥염","뻐끔플라워","조커","용사","반조 & 카주이",
+"테리","벨레트 / 벨레스","미엔미엔","스티브 / 알렉스","세피로스","호무라 / 히카리","Kazuya","소라"
+
+];
+
+const sidebar=
+document.getElementById("sidebar");
+
+const menuBtn=
+document.querySelector(".menu-btn");
+
+const list=
+document.getElementById("characterList");
+
+const rollBtn=
+document.getElementById("rollBtn");
+
+const result=
+document.getElementById("result");
+
+const toast=
+document.getElementById("toast");
+
+let enabled=[];
+
+let rolling=false;
+
+menuBtn.onclick=()=>{
+
+sidebar.classList.toggle("open");
+
+menuBtn.classList.toggle("open");
+
+};
+
+function updateEnabled(){
+
+enabled=[
+
+...document.querySelectorAll(
+".char-item input:checked"
+)
+
+].map(
+
+v=>
+v.dataset.name
+
+);
+
+}
+
+function render(){
+
+list.innerHTML="";
+
+fighters.forEach(name=>{
+
+const row=
+document.createElement("div");
+
+row.className="char-item";
+
+const check=
+document.createElement("input");
+
+check.type="checkbox";
+
+check.checked=true;
+
+check.dataset.name=name;
+
+check.onchange=updateEnabled;
+
+const label=
+document.createElement("label");
+
+label.textContent=name;
+
+row.append(
+check,
+label
+);
+
+list.append(row);
+
+});
+
+updateEnabled();
+
+}
+
+render();
+
+document
+.getElementById("selectAll")
+.onclick=()=>{
+
+document
+.querySelectorAll(
+".char-item input"
+)
+.forEach(
+v=>v.checked=true
+);
+
+updateEnabled();
+
+};
+
+document
+.getElementById("clearAll")
+.onclick=()=>{
+
+document
+.querySelectorAll(
+".char-item input"
+)
+.forEach(
+v=>v.checked=false
+);
+
+updateEnabled();
+
+};
+
+function showToast(){
+
+toast.classList.add(
+"show"
+);
+
+setTimeout(()=>{
+
+toast.classList.remove(
+"show"
+);
+
+},1800);
+
+}
+
+rollBtn.onclick=()=>{
+
+if(rolling)
+return;
+
+if(
+enabled.length===0
+){
+
+showToast();
+
+return;
+
+}
+
+rolling=true;
+
+rollBtn.classList.add(
+"disabled"
+);
+
+animate(
+0,
+50
+);
+
+};
+
+function animate(
+count,
+delay
+){
+
+result.textContent=
+
+enabled[
+Math.floor(
+Math.random()
+*
+enabled.length
+)
+];
+
+result.style.color=
+"#d40d0d";
+
+if(
+count<20
+){
+
+setTimeout(
+()=>animate(
+count+1,
+delay
+),
+delay
+);
+
+}
+
+else if(
+count<30
+){
+
+setTimeout(
+
+()=>animate(
+count+1,
+delay*1.2
+),
+
+delay*1.2
+
+);
+
+}
+
+else{
+
+result.style.color=
+"#2441d4";
+
+rolling=false;
+
+rollBtn.classList.remove(
+"disabled"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
